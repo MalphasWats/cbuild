@@ -16,21 +16,7 @@
 #include "string.h"
 #include "file_list.h"
 
-typedef struct config_t {
-    char* compiler;
-    char* output_file_name;
-    char* c_flags;
-    char* l_flags;
-
-} config_t;
-
-static const config_t DEFAULT_CONFIG = {
-    "gcc",
-    "out.exe",
-    "-Wall -O2",
-    ""
-};
-
+#include "config_parser.h"
 
 // https://stackoverflow.com/questions/2314542/listing-directory-contents-using-c-and-windows
 int32_t load_directory(const char* directory_path, file_list_t* list) {
@@ -133,7 +119,7 @@ int32_t main(int32_t argc, char* argv[]) {
         return 1;
     }
 
-    config_t current_config = DEFAULT_CONFIG;
+    config_t* current_config = load_config(); //DEFAULT_CONFIG;
 
     printf("Source directory Loaded [%d files]\n", source_files->num_of_files);
     file_list_print(source_files);
@@ -201,9 +187,9 @@ int32_t main(int32_t argc, char* argv[]) {
         obj_files = new_obj_files;
 
         const char* command_template_obj = "%s %s -c %s\\%s -o %s\\%s.o -MMD";
-        build_command_len = 1 + snprintf(NULL, 0, command_template_obj, current_config.compiler, current_config.c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
+        build_command_len = 1 + snprintf(NULL, 0, command_template_obj, current_config->compiler, current_config->c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
         build_command = str_new(build_command_len); //malloc(build_command_len);
-        snprintf(build_command, build_command_len, command_template_obj, current_config.compiler, current_config.c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
+        snprintf(build_command, build_command_len, command_template_obj, current_config->compiler, current_config->c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
         printf(" %s\n", build_command);
         
         if (system(build_command)) {
@@ -220,9 +206,9 @@ int32_t main(int32_t argc, char* argv[]) {
     else {
         // do the final build part.
         const char* command_template_exe = "%s %s %s -o .\\build\\%s";
-        build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config.compiler, current_config.c_flags, obj_files, current_config.output_file_name);
+        build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name);
         build_command = str_new(build_command_len); //malloc(build_command_len);
-        snprintf(build_command, build_command_len, command_template_exe, current_config.compiler, current_config.c_flags, obj_files, current_config.output_file_name);
+        snprintf(build_command, build_command_len, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name);
         printf("\n %s\n", build_command);
 
         if (system(build_command)) {
@@ -233,6 +219,7 @@ int32_t main(int32_t argc, char* argv[]) {
     }
 
     free(obj_files);
+    load_config_destroy(current_config);
 
     file_list_destroy(object_files);
     file_list_destroy(source_files);
