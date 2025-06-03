@@ -61,6 +61,12 @@ config_t* load_config_file(const char* filename) {
                     value[vi] = c;
                     value[++vi] = '\0';
                 }
+                if (vi > 254){
+                    //TODO allow longer values
+                    printf("Error: configuration value too long for %s\n", key);
+                    while( (c = fgetc(f)) != '\n' && c != EOF);
+                    break;
+                }
             }
             //printf("DEBUG: value = %s\n", value);
 
