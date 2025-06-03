@@ -1,8 +1,8 @@
 #include "string.h"
 
 char* str_new(int32_t length) {
-    if (length < 1) return NULL;
-    char* s = malloc(length+1);
+    if (length < 1) length=0;
+    char* s = malloc(sizeof(char) * length+1);
     s[0] = '\0';
     s[length] = '\0';
     return s;
