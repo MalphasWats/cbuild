@@ -5,8 +5,9 @@
     > mkdir build
     > gcc -Wall -O2 -c src/string.c -o ./build/string.c.o
     > gcc -Wall -O2 -c src/file_list.c -o ./build/file_list.c.o
+    > gcc -Wall -O2 -c src/config_parser.c -o ./build/config_parser.c.o
     > gcc -Wall -O2 -c src/cbuild.c -o ./build/cbuild.c.o
-    > gcc -Wall -O3 ./build/cbuild.c.o ./build/string.c.o ./build/file_list.c.o -o ./build/cbuild.exe
+    > gcc -Wall -O2 ./build/cbuild.c.o ./build/string.c.o ./build/file_list.c.o ./build/config_parser.c.o -o ./build/cbuild.exe
 
 */
 #include <windows.h>
