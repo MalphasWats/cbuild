@@ -24,5 +24,6 @@ static const config_t DEFAULT_CONFIG = {
 
 config_t* load_config();
 config_t* load_config_file(const char* filename);
+void config_destroy(config_t* config);
 
 #endif

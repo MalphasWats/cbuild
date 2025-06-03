@@ -219,7 +219,7 @@ int32_t main(int32_t argc, char* argv[]) {
     }
 
     free(obj_files);
-    load_config_destroy(current_config);
+    config_destroy(current_config);
 
     file_list_destroy(object_files);
     file_list_destroy(source_files);

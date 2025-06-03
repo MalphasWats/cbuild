@@ -6,7 +6,7 @@ config_t* load_config() {
     return load_config_file(DEFAULT_CONFIG_FILENAME);
 }
 
-void load_config_destroy(config_t* config) {
+void config_destroy(config_t* config) {
     free(config->compiler);
     free(config->output_file_name);
     free(config->c_flags);
