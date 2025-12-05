@@ -206,10 +206,10 @@ int32_t main(int32_t argc, char* argv[]) {
     }
     else {
         // do the final build part.
-        const char* command_template_exe = "%s %s %s -o .\\build\\%s";
-        build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name);
+        const char* command_template_exe = "%s %s %s -o .\\build\\%s %s";
+        build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
         build_command = str_new(build_command_len); //malloc(build_command_len);
-        snprintf(build_command, build_command_len, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name);
+        snprintf(build_command, build_command_len, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
         printf("\n %s\n", build_command);
 
         if (system(build_command)) {
