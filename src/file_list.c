@@ -9,7 +9,7 @@ file_list_t* file_list_new() {
     return list;
 }
 
-int32_t file_extract_extension(char* ext, const char* name) {
+int32_t file_list_extract_extension(char* ext, const char* name) {
     uint32_t len = str_len(name);
     char* buff = malloc(len+1);
 
@@ -65,13 +65,24 @@ int32_t file_list_add_item(file_list_t* list, const char* path, const char* name
     return 1;
 }
 
-int32_t filter_extension_file_list(file_list_t* filtered, file_list_t* list, const char* extension) {
+int32_t file_list_filter_by_extension(file_list_t* filtered, file_list_t* list, const char* extension) {
     for(uint32_t i=0 ; i<list->num_of_files ; i++) {
         if (str_cmp(list->files[i].extension, extension)) {
             file_list_add_item(filtered, list->files[i].path, list->files[i].name, list->files[i].extension, list->files[i].last_modified);
         }
     }
     return 1;
+}
+
+int32_t file_list_find_by_filename(file_list_t* list, const char* filename) {
+    uint32_t i = 0;
+    while(i < list->num_of_files) {
+        if (str_cmp(list->files[i].name, filename)) {
+            return i;
+        }
+        i++;
+    }
+    return i;
 }
 
 int32_t file_list_print(file_list_t* list) {

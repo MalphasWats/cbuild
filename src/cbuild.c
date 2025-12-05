@@ -51,7 +51,7 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
             else {
                 uint64_t last_mod = (((uint64_t)f.ftLastWriteTime.dwHighDateTime) << 32) + f.ftLastWriteTime.dwLowDateTime;
                 char* extension = str_new(str_len(f.cFileName));
-                file_extract_extension(extension, f.cFileName);
+                file_list_extract_extension(extension, f.cFileName);
                 file_list_add_item(list, directory_path, f.cFileName, extension, last_mod);
                 free(extension);
                 //printf("debug: %s\\%s [%s] (%llu)\n", p, f.cFileName, extension, last_mod);
@@ -125,8 +125,12 @@ int32_t main(int32_t argc, char* argv[]) {
     printf("Source directory Loaded [%d files]\n", source_files->num_of_files);
     file_list_print(source_files);
 
+    file_list_t* build_files = file_list_new();
+    file_list_filter_by_extension(build_files, source_files, "c");
+
+    file_list_t* build_directory = file_list_new();
     file_list_t* object_files = file_list_new();
-    if (!load_directory(".\\build", object_files)) { // || object_files->num_of_files == 0) {
+    if (!load_directory(".\\build", build_directory)) { // || object_files->num_of_files == 0) {
         printf("Creating .\\build directory.\n");
         if (!CreateDirectory(".\\build", NULL)) {
             int32_t err = GetLastError();
@@ -137,12 +141,28 @@ int32_t main(int32_t argc, char* argv[]) {
     }
     else {
         // build changed
+        file_list_filter_by_extension(object_files, build_directory, "o");
+
+        file_list_t* files_to_build = file_list_new();
+
+        uint32_t i = 0;
+        uint64_t latest_build_date = 0;
+        for(i=0 ; i<object_files->num_of_files ; i++) {
+            if (object_files->files[i].last_modified > latest_build_date) latest_build_date = object_files->files[i].last_modified;
+        }
+
+        for(i=0 ; i<source_files->num_of_files ; i++) {
+            if (source_files->files[i].last_modified > latest_build_date) {
+                file_list_add_item(files_to_build, source_files->files[i].path, source_files->files[i].name, source_files->files[i].extension, source_files->files[i].last_modified);
+            }
+        }
+        printf("Files Modified since last build [%d files]:\n", files_to_build->num_of_files);
+        file_list_print(files_to_build);
     }
+    file_list_destroy(object_files);
+    file_list_destroy(build_directory);
 
     // testing build all
-    file_list_t* build_files = file_list_new();
-    filter_extension_file_list(build_files, source_files, "c");
-    
     printf("building with [%d files]\n", build_files->num_of_files);
 
     uint32_t errors = 0;
@@ -222,7 +242,6 @@ int32_t main(int32_t argc, char* argv[]) {
     free(obj_files);
     config_destroy(current_config);
 
-    file_list_destroy(object_files);
     file_list_destroy(source_files);
     file_list_destroy(build_files);
     return 0;
