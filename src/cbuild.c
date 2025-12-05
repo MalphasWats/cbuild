@@ -126,7 +126,7 @@ int32_t main(int32_t argc, char* argv[]) {
     file_list_print(source_files);
 
     file_list_t* object_files = file_list_new();
-    if (!load_directory(".\\build", object_files) || object_files->num_of_files == 0) {
+    if (!load_directory(".\\build", object_files)) // || object_files->num_of_files == 0) {
         printf("Creating .\\build directory.\n");
         if (!CreateDirectory(".\\build", NULL)) {
             int32_t err = GetLastError();
