@@ -27,7 +27,6 @@ int32_t file_list_extract_extension(char* ext, const char* name);
 int32_t file_list_destroy(file_list_t* list);
 int32_t file_list_add_item(file_list_t* list, const char* path, const char* name, const char* extension, uint64_t last_modified);
 int32_t file_list_filter_by_extension(file_list_t* filtered, file_list_t* list, const char* extension);
-int32_t file_list_find_by_filename(file_list_t* list, const char* filename);
 
 int32_t file_list_print(file_list_t* list);
 

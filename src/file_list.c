@@ -74,17 +74,6 @@ int32_t file_list_filter_by_extension(file_list_t* filtered, file_list_t* list, 
     return 1;
 }
 
-int32_t file_list_find_by_filename(file_list_t* list, const char* filename) {
-    uint32_t i = 0;
-    while(i < list->num_of_files) {
-        if (str_cmp(list->files[i].name, filename)) {
-            return i;
-        }
-        i++;
-    }
-    return i;
-}
-
 int32_t file_list_print(file_list_t* list) {
     uint32_t i = 0;
     while(i < list->num_of_files) {
