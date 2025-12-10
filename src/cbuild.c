@@ -19,8 +19,6 @@
 
 #include "config_parser.h"
 
-#include "version.h"
-
 static const uint32_t BUILD_MODIFIED = 0;
 static const uint32_t BUILD_ALL = 1;
 
@@ -79,9 +77,9 @@ int32_t make_directory_path(const char* path) {
 
     //strip off any relative directory stuff
     //TODO: this breaks directory names starting with '.'
-    while(path[path_i] == '.' || path[path_i] == '/') {
-        path_i += 1;
-    }
+    //while(path[path_i] == '.' || path[path_i] == '/') {
+    //    path_i += 1;
+    //}
 
     // first folder
     uint32_t buff_i = 0;
@@ -135,10 +133,6 @@ int32_t main(int32_t argc, char* argv[]) {
 
     if (argc > 1) {
         if ( str_cmp_ignore_case(argv[1], "ALL") ) build_mode = BUILD_ALL;
-
-        if ( str_cmp_ignore_case(argv[1], "VERSION") ) {
-            printf("Version: %d\n", CBUILD_VERSION);
-        }
     }
 
     file_list_t* source_files = file_list_new();
@@ -171,8 +165,10 @@ int32_t main(int32_t argc, char* argv[]) {
         build_mode = BUILD_ALL;
     }
 
+    uint32_t modified_files = 0;
     if (build_mode == BUILD_ALL) {
         for (uint32_t i = 0 ; i < build_files->num_of_files ; i++) build_files->files[i].flags = 1;
+        modified_files = build_files->num_of_files;
     }
     else {
         file_list_filter_by_extension(object_files, build_directory, "o");
@@ -183,7 +179,6 @@ int32_t main(int32_t argc, char* argv[]) {
             if (object_files->files[i].last_modified > latest_build_date) latest_build_date = object_files->files[i].last_modified;
         }
 
-        uint32_t modified_files = 0;
         //TODO: check for header files too!!!
         for(uint32_t i=0 ; i<build_files->num_of_files ; i++) {
             if (build_files->files[i].last_modified > latest_build_date) {
@@ -194,7 +189,11 @@ int32_t main(int32_t argc, char* argv[]) {
 
         for(uint32_t i=0 ; i<source_files->num_of_files ; i++) {
             if ( str_cmp_ignore_case(source_files->files[i].extension, "h") && source_files->files[i].last_modified > latest_build_date) {
-                printf("DEBUG: found modified header file: %s/%s\n", source_files->files[i].path, source_files->files[i].name);
+
+                //TODO: cute hack to normalise path names. .d files can have mixed / \ path symbols
+                uint32_t source_filename_len = snprintf(NULL, 0, "%s/%s", source_files->files[i].path+2, source_files->files[i].name) + 1;
+                char* source_filename_path = str_new(source_filename_len);
+                snprintf(source_filename_path, source_filename_len, "%s/%s", source_files->files[i].path+2, source_files->files[i].name);
 
                 for(uint32_t b=0 ; b<build_files->num_of_files ; b++) {
 
@@ -212,26 +211,56 @@ int32_t main(int32_t argc, char* argv[]) {
                     dep_filename[dep_filename_len++] = 'd';
                     dep_filename[dep_filename_len] = '\0';
 
-                    printf("DEBUG: scanning dependency file: %s\n", dep_filename);
+                    FILE *f;
+                    f = fopen(dep_filename, "r");
+                    if (!f) {
+                        printf("Dependency file not found, rebuilding module [%s].\n", dep_filename);
+                        if (build_files->files[b].flags != 1) {
+                            build_files->files[b].flags = 1;
+                            modified_files++;
+                        }
+                    }
+                    else {
+                        char c;
+                        while( (c = fgetc(f)) != EOF && c != ':'); //Skip to list of files.
+                        fgetc(f); // leading space.
+                        char* buffer = str_new(255); //TODO: allow for longer file paths!
+                        uint32_t ci = 0;
+                        while( (c = fgetc(f)) != EOF ) {
+                            if (ci > 254) { //TODO: allow for longer file paths!
+                                printf("error processing dependency file: %s\n path too long.\n", dep_filename);
+                                return 1;
+                            }
+                            if (c == ' ' || c == '\r' || c == '\n') {
+                                buffer[ci] = '\0';
 
+                                if (str_cmp_ignore_case(source_filename_path, buffer)) {
+                                    if (build_files->files[b].flags != 1) {
+                                        build_files->files[b].flags = 1;
+                                        modified_files++;
+                                    }
+                                }
+                                ci = 0;
+                                buffer[ci] = '\0';
+                            }
+                            else {
+                                buffer[ci++] = c;
+                            }
+                        }
 
-
+                        fclose(f);
+                        free(buffer);
+                    }
                     free(build_path);
                     free(dep_filename);
                 }
+
+                free(source_filename_path);
             }
         }
-
-        printf("Files Modified since last build [%d files]:\n", modified_files);
-
-        if ( modified_files > 0 ) {
-            //file_list_t* dependency_files = file_list_new();
-            //file_list_filter_by_extension(dependency_files, build_directory, "d");
-            //file_list_destroy(dependency_files);
-        }
-
-        
     }
+
+    printf("Building [%d files]:\n", modified_files);
 
     file_list_destroy(build_directory);
 
@@ -294,14 +323,15 @@ int32_t main(int32_t argc, char* argv[]) {
         }
         else {
             // do the final build part.
+            printf("\nLinking executable [%s]:\n", current_config->output_file_name);
             const char* command_template_exe = "%s %s %s -o ./build/%s %s";
             build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
             build_command = str_new(build_command_len);
             snprintf(build_command, build_command_len, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
-            printf("\n %s\n", build_command);
+            printf(" %s\n", build_command);
 
             if (system(build_command)) {
-                printf("Error building executable.");
+                printf("Error building executable.\n");
             }
 
             free(build_command);
