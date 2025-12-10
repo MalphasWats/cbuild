@@ -78,7 +78,7 @@ int32_t file_list_filter_by_extension(file_list_t* filtered, file_list_t* list, 
 int32_t file_list_print(file_list_t* list) {
     uint32_t i = 0;
     while(i < list->num_of_files) {
-        printf("%s\\%s [%s] (%llu)\n", list->files[i].path, list->files[i].name, list->files[i].extension, list->files[i].last_modified);
+        printf("%s/%s [%s] (%llu)\n", list->files[i].path, list->files[i].name, list->files[i].extension, list->files[i].last_modified);
         i += 1;
     }
     return 1;

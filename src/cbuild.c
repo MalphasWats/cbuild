@@ -29,9 +29,9 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
     WIN32_FIND_DATA f;
     HANDLE handle = NULL;
 
-    size_t len = snprintf(NULL, 0, "%s\\*.*", directory_path) + 1;
+    size_t len = snprintf(NULL, 0, "%s/*.*", directory_path) + 1;
     char* path = str_new(len); //malloc(len);
-    snprintf(path, len, "%s\\*.*", directory_path);
+    snprintf(path, len, "%s/*.*", directory_path);
 
     if((handle = FindFirstFile(path, &f)) == INVALID_HANDLE_VALUE)
     {
@@ -47,9 +47,9 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
         if (!str_cmp(f.cFileName, ".") && !str_cmp(f.cFileName, "..")) {
        
             if (f.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                len = snprintf(NULL, 0, "%s\\%s", directory_path, f.cFileName) + 1;
+                len = snprintf(NULL, 0, "%s/%s", directory_path, f.cFileName) + 1;
                 char* new_path = str_new(len); //malloc(len);
-                snprintf(new_path, len, "%s\\%s", directory_path, f.cFileName);
+                snprintf(new_path, len, "%s/%s", directory_path, f.cFileName);
                 load_directory(new_path, list);
                 free(new_path);
             }
@@ -59,7 +59,7 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
                 file_list_extract_extension(extension, f.cFileName);
                 file_list_add_item(list, directory_path, f.cFileName, extension, last_mod);
                 free(extension);
-                //printf("debug: %s\\%s [%s] (%llu)\n", p, f.cFileName, extension, last_mod);
+                //printf("debug: %s/%s [%s] (%llu)\n", p, f.cFileName, extension, last_mod);
             }
         }
 
@@ -84,7 +84,7 @@ int32_t make_directory_path(const char* path) {
 
     //strip off any relative directory stuff
     //TODO: this breaks directory names starting with '.'
-    while(path[path_i] == '.' || path[path_i] == '\\') {
+    while(path[path_i] == '.' || path[path_i] == '/') {
         path_i += 1;
     }
 
@@ -92,7 +92,7 @@ int32_t make_directory_path(const char* path) {
     uint32_t buff_i = 0;
     while(1) {
         buffer[buff_i] = path[path_i];
-        if (path[path_i] == '\\' || path[path_i] == '\0') {
+        if (path[path_i] == '/' || path[path_i] == '\0') {
             buffer[buff_i+1] = '\0';
             // make dir with buffer
             if (!CreateDirectory(buffer, NULL)) {
@@ -122,14 +122,14 @@ int32_t make_build_path_from_source_path(char* build_path, const char* source_pa
     if (new_len > 0) {
         char* buffer = str_new(new_len);
         str_substr(buffer, source_path, 6, source_path_len);
-        path_len = str_concat(NULL, ".\\build\\", buffer);
-        if (build_path != NULL) str_concat(build_path, ".\\build\\", buffer);
+        path_len = str_concat(NULL, "./build/", buffer);
+        if (build_path != NULL) str_concat(build_path, "./build/", buffer);
         free(buffer);
         return path_len;
     }
     else {
         path_len = 7;
-        if (build_path != NULL) str_cpy(".\\build", build_path);    
+        if (build_path != NULL) str_cpy("./build", build_path);    
     }
     return path_len;
 }
@@ -147,7 +147,7 @@ int32_t main(int32_t argc, char* argv[]) {
     }
 
     file_list_t* source_files = file_list_new();
-    if (!load_directory(".\\src", source_files)) {
+    if (!load_directory("./src", source_files)) {
         printf("No source directory found.\n");
         file_list_destroy(source_files);
 
@@ -166,9 +166,9 @@ int32_t main(int32_t argc, char* argv[]) {
 
     file_list_filter_by_extension(build_files, source_files, "c");
 
-    if (!load_directory(".\\build", build_directory)) {
-        printf("Creating .\\build directory.\n");
-        if (!CreateDirectory(".\\build", NULL)) {
+    if (!load_directory("./build", build_directory)) {
+        printf("Creating ./build directory.\n");
+        if (!CreateDirectory("./build", NULL)) {
             int32_t err = GetLastError();
             printf("Error: Unable to create build directory. Error Code: %d", err);
             return 1;
@@ -201,7 +201,7 @@ int32_t main(int32_t argc, char* argv[]) {
 
         for(uint32_t i=0 ; i<source_files->num_of_files ; i++) {
             if ( str_cmp_ignore_case(source_files->files[i].extension, "h") && source_files->files[i].last_modified > latest_build_date) {
-                printf("DEBUG: found modified header file: %s\\%s\n", source_files->files[i].path, source_files->files[i].name);
+                printf("DEBUG: found modified header file: %s/%s\n", source_files->files[i].path, source_files->files[i].name);
 
                 for(uint32_t b=0 ; b<build_files->num_of_files ; b++) {
 
@@ -209,7 +209,7 @@ int32_t main(int32_t argc, char* argv[]) {
                     char* build_path = str_new(build_path_len);
                     build_path_len = make_build_path_from_source_path(build_path, build_files->files[b].path);
 
-                    build_path[build_path_len++] = '\\';
+                    build_path[build_path_len++] = '/';
                     build_path[build_path_len] = '\0';
 
                     uint32_t dep_filename_len = str_concat(NULL, build_path, build_files->files[b].name) + 2;
@@ -254,13 +254,13 @@ int32_t main(int32_t argc, char* argv[]) {
         uint32_t build_command_len;
 
         for(uint32_t i=0 ; i<build_files->num_of_files ; i++) {
-            //printf(" building file: %s\\%s\n", build_files->files[i].path, build_files->files[i].name);
+            //printf(" building file: %s/%s\n", build_files->files[i].path, build_files->files[i].name);
 
             uint32_t build_path_len = make_build_path_from_source_path(NULL, build_files->files[i].path) + 1;
             char* build_path = str_new(build_path_len);
             build_path_len = make_build_path_from_source_path(build_path, build_files->files[i].path);
 
-            if (build_path_len > 7) { // build path is .\build so don't need to make the directory.
+            if (build_path_len > 7) { // build path is ./build so don't need to make the directory.
                 if (!make_directory_path(build_path)) {
                     int32_t err = GetLastError();
                     printf("Error: Unable to create directory %s. Error Code: %d", build_path, err);
@@ -274,9 +274,9 @@ int32_t main(int32_t argc, char* argv[]) {
             // if (new_len > 0) {
             //     char* buffer = str_new(new_len);
             //     str_substr(buffer, build_files->files[i].path, 6, str_len(build_files->files[i].path));
-            //     uint32_t path_len = str_concat(NULL, ".\\build\\", buffer);
+            //     uint32_t path_len = str_concat(NULL, "./build/", buffer);
             //     build_path = str_new(path_len);
-            //     str_concat(build_path, ".\\build\\", buffer);
+            //     str_concat(build_path, "./build/", buffer);
             //     free(buffer);
             //     if (!make_directory_path(build_path)) {
             //         int32_t err = GetLastError();
@@ -287,11 +287,11 @@ int32_t main(int32_t argc, char* argv[]) {
             // }
             // else {
             //     build_path = str_new(8);
-            //     str_cpy(".\\build", build_path);
+            //     str_cpy("./build", build_path);
             // }
             // do the compile.
             
-            const char* obj_file_template = "%s\\%s.o ";
+            const char* obj_file_template = "%s/%s.o ";
             uint32_t obj_files_buffer_len = 1 + snprintf(NULL, 0, obj_file_template, build_path, build_files->files[i].name);
             char* obj_files_buffer = malloc(obj_files_buffer_len);
             snprintf(obj_files_buffer, obj_files_buffer_len, obj_file_template, build_path, build_files->files[i].name);
@@ -306,7 +306,7 @@ int32_t main(int32_t argc, char* argv[]) {
 
             if (build_files->files[i].flags == 1) {
 
-                const char* command_template_obj = "%s %s -c %s\\%s -o %s\\%s.o -MMD";
+                const char* command_template_obj = "%s %s -c %s/%s -o %s/%s.o -MMD";
                 build_command_len = 1 + snprintf(NULL, 0, command_template_obj, current_config->compiler, current_config->c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
                 build_command = str_new(build_command_len); //malloc(build_command_len);
                 snprintf(build_command, build_command_len, command_template_obj, current_config->compiler, current_config->c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
@@ -326,7 +326,7 @@ int32_t main(int32_t argc, char* argv[]) {
         }
         else {
             // do the final build part.
-            const char* command_template_exe = "%s %s %s -o .\\build\\%s %s";
+            const char* command_template_exe = "%s %s %s -o ./build/%s %s";
             build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
             build_command = str_new(build_command_len); //malloc(build_command_len);
             snprintf(build_command, build_command_len, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
