@@ -16,11 +16,30 @@ uint32_t str_len(const char* str) {
 }
 
 int32_t str_cmp(const char* str1, const char* str2) {
+    if (str_len(str1) != str_len(str2)) return 0;
     uint32_t i = 0;
     while(str1[i] == str2[i]){
         if (str1[i] == '\0') return 1;
         i++;
+        
     }
+    return 0;
+}
+
+int32_t str_cmp_ignore_case(const char* str1, const char* str2) {
+    if (str_len(str1) != str_len(str2)) return 0;
+    uint32_t i = 0;
+    char c1;
+    char c2;
+    do { 
+        c1 = str1[i];
+        c2 = str2[i];
+        if (c1 == '\0') return 1;
+        if (c1 >= 'a' && c1 <= 'z') c1 -= 32;
+        if (c2 >= 'a' && c2 <= 'z') c2 -= 32;
+
+        i++;
+    } while(c1 == c2);
     return 0;
 }
 

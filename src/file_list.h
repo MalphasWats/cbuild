@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "string.h"
+#include "util/string.h"
 
 static const uint32_t FILE_LIST_INITIAL_ITEMS = 200;
 
@@ -14,6 +14,7 @@ typedef struct file_item_t {
     char* name;
     char* extension;
     uint64_t last_modified;
+    uint32_t flags;
 } file_item_t;
 
 typedef struct file_list_t {

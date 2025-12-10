@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "string.h"
+#include "util/string.h"
 
 typedef struct config_t {
     char* compiler;

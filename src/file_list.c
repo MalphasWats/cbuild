@@ -56,6 +56,7 @@ int32_t file_list_add_item(file_list_t* list, const char* path, const char* name
     str_cpy(extension, list->files[list->num_of_files].extension);
     
     list->files[list->num_of_files].last_modified = last_modified;
+    list->files[list->num_of_files].flags = 0;
 
     list->num_of_files += 1;
     if (list->num_of_files >= FILE_LIST_INITIAL_ITEMS) { //TODO: grow
@@ -67,7 +68,7 @@ int32_t file_list_add_item(file_list_t* list, const char* path, const char* name
 
 int32_t file_list_filter_by_extension(file_list_t* filtered, file_list_t* list, const char* extension) {
     for(uint32_t i=0 ; i<list->num_of_files ; i++) {
-        if (str_cmp(list->files[i].extension, extension)) {
+        if (str_cmp_ignore_case(list->files[i].extension, extension)) {
             file_list_add_item(filtered, list->files[i].path, list->files[i].name, list->files[i].extension, list->files[i].last_modified);
         }
     }
