@@ -54,8 +54,6 @@ config_t* load_config_file(const char* filename) {
         else if (c == ' ') {} // skip
         else if (c == '=') {
             //grab the value
-            //printf("DEBUG: key = %s\n", key);
-
             while( (c = fgetc(f)) != '\n' && c != EOF) {
                 if (!(vi==0 && c == ' ')) {
                     value[vi] = c;
@@ -68,7 +66,6 @@ config_t* load_config_file(const char* filename) {
                     break;
                 }
             }
-            //printf("DEBUG: value = %s\n", value);
 
             if (str_cmp(key, "compiler")) {
                 free(config->compiler);

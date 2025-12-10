@@ -48,11 +48,11 @@ int32_t file_list_destroy(file_list_t* list) {
 
 int32_t file_list_add_item(file_list_t* list, const char* path, const char* name, const char* extension, uint64_t last_modified) {
     //TODO: check list size, grow as needed
-    list->files[list->num_of_files].path = str_new(str_len(path));//malloc(str_len(path)+1);
+    list->files[list->num_of_files].path = str_new(str_len(path));
     str_cpy(path, list->files[list->num_of_files].path);
     list->files[list->num_of_files].name = str_new(str_len(name));
     str_cpy(name, list->files[list->num_of_files].name);
-    list->files[list->num_of_files].extension = str_new(str_len(extension));//malloc(str_len(path)+1);
+    list->files[list->num_of_files].extension = str_new(str_len(extension));
     str_cpy(extension, list->files[list->num_of_files].extension);
     
     list->files[list->num_of_files].last_modified = last_modified;

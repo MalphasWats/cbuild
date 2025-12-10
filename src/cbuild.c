@@ -30,7 +30,7 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
     HANDLE handle = NULL;
 
     size_t len = snprintf(NULL, 0, "%s/*.*", directory_path) + 1;
-    char* path = str_new(len); //malloc(len);
+    char* path = str_new(len);
     snprintf(path, len, "%s/*.*", directory_path);
 
     if((handle = FindFirstFile(path, &f)) == INVALID_HANDLE_VALUE)
@@ -48,7 +48,7 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
        
             if (f.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                 len = snprintf(NULL, 0, "%s/%s", directory_path, f.cFileName) + 1;
-                char* new_path = str_new(len); //malloc(len);
+                char* new_path = str_new(len);
                 snprintf(new_path, len, "%s/%s", directory_path, f.cFileName);
                 load_directory(new_path, list);
                 free(new_path);
@@ -59,7 +59,6 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
                 file_list_extract_extension(extension, f.cFileName);
                 file_list_add_item(list, directory_path, f.cFileName, extension, last_mod);
                 free(extension);
-                //printf("debug: %s/%s [%s] (%llu)\n", p, f.cFileName, extension, last_mod);
             }
         }
 
@@ -70,10 +69,6 @@ int32_t load_directory(const char* directory_path, file_list_t* list) {
     FindClose(handle);
     return 1;
 }
-
-// int32_t build_file_list(file_list_t* list) {
-//     return 1;
-// }
 
 int32_t make_directory_path(const char* path) {
     
@@ -157,7 +152,6 @@ int32_t main(int32_t argc, char* argv[]) {
     config_t* current_config = load_config(); //DEFAULT_CONFIG;
 
     printf("Source directory Loaded [%d files]\n", source_files->num_of_files);
-    //file_list_print(source_files);
 
     file_list_t* build_files = file_list_new();
 
@@ -193,7 +187,6 @@ int32_t main(int32_t argc, char* argv[]) {
         //TODO: check for header files too!!!
         for(uint32_t i=0 ; i<build_files->num_of_files ; i++) {
             if (build_files->files[i].last_modified > latest_build_date) {
-                //printf("DEBUG: File modified since last build: %s//%s\n", object_files->files[i].path, object_files->files[i].name);
                 build_files->files[i].flags = 1;
                 modified_files++;
             }
@@ -230,7 +223,6 @@ int32_t main(int32_t argc, char* argv[]) {
         }
 
         printf("Files Modified since last build [%d files]:\n", modified_files);
-        //file_list_print(build_files);
 
         if ( modified_files > 0 ) {
             //file_list_t* dependency_files = file_list_new();
@@ -245,17 +237,12 @@ int32_t main(int32_t argc, char* argv[]) {
 
     if ( build_files->num_of_files > 0 ) {
 
-        // testing build all
-        //printf("building with [%d files]\n", build_files->num_of_files);
-
         uint32_t errors = 0;
         char* obj_files = str_new(1);
         char* build_command;
         uint32_t build_command_len;
 
         for(uint32_t i=0 ; i<build_files->num_of_files ; i++) {
-            //printf(" building file: %s/%s\n", build_files->files[i].path, build_files->files[i].name);
-
             uint32_t build_path_len = make_build_path_from_source_path(NULL, build_files->files[i].path) + 1;
             char* build_path = str_new(build_path_len);
             build_path_len = make_build_path_from_source_path(build_path, build_files->files[i].path);
@@ -269,26 +256,7 @@ int32_t main(int32_t argc, char* argv[]) {
                 }
             }
 
-            // char* build_path;
-            // int32_t new_len = str_substr(NULL, build_files->files[i].path, 6, str_len(build_files->files[i].path));
-            // if (new_len > 0) {
-            //     char* buffer = str_new(new_len);
-            //     str_substr(buffer, build_files->files[i].path, 6, str_len(build_files->files[i].path));
-            //     uint32_t path_len = str_concat(NULL, "./build/", buffer);
-            //     build_path = str_new(path_len);
-            //     str_concat(build_path, "./build/", buffer);
-            //     free(buffer);
-            //     if (!make_directory_path(build_path)) {
-            //         int32_t err = GetLastError();
-            //         printf("Error: Unable to create directory %s. Error Code: %d", build_path, err);
-            //         free(build_path);
-            //         return 1;
-            //     }
-            // }
-            // else {
-            //     build_path = str_new(8);
-            //     str_cpy("./build", build_path);
-            // }
+            
             // do the compile.
             
             const char* obj_file_template = "%s/%s.o ";
@@ -308,7 +276,7 @@ int32_t main(int32_t argc, char* argv[]) {
 
                 const char* command_template_obj = "%s %s -c %s/%s -o %s/%s.o -MMD";
                 build_command_len = 1 + snprintf(NULL, 0, command_template_obj, current_config->compiler, current_config->c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
-                build_command = str_new(build_command_len); //malloc(build_command_len);
+                build_command = str_new(build_command_len);
                 snprintf(build_command, build_command_len, command_template_obj, current_config->compiler, current_config->c_flags, build_files->files[i].path, build_files->files[i].name, build_path, build_files->files[i].name);
                 printf(" %s\n", build_command);
                 
@@ -328,7 +296,7 @@ int32_t main(int32_t argc, char* argv[]) {
             // do the final build part.
             const char* command_template_exe = "%s %s %s -o ./build/%s %s";
             build_command_len = 1 + snprintf(NULL, 0, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
-            build_command = str_new(build_command_len); //malloc(build_command_len);
+            build_command = str_new(build_command_len);
             snprintf(build_command, build_command_len, command_template_exe, current_config->compiler, current_config->c_flags, obj_files, current_config->output_file_name, current_config->l_flags);
             printf("\n %s\n", build_command);
 
