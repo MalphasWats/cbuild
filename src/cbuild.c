@@ -244,6 +244,8 @@ int32_t main(int32_t argc, char* argv[]) {
                                 buffer[ci] = '\0';
                             }
                             else {
+                                if (c == '\\') c = '/'; //TODO: another cute hack to normalise any backslashes.
+                                                        //      GCC can still produce some weird paths though.
                                 buffer[ci++] = c;
                             }
                         }
